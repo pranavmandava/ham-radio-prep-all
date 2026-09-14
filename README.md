@@ -30,3 +30,5 @@ python3 -m http.server 8000 --directory public
 npx wrangler kv:key put --binding PROGRESS_KV test 1  # sanity check binding
 npx wrangler deploy
 ```
+
+Trigger rebuild
