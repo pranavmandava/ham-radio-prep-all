@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ham Exam — SRS Trainer (Technician / General / Extra)</title>
+<style>
+:root{--bg:#0f1115;--card:#171a20;--muted:#9aa0aa;--text:#e8e9eb;--accent:#4f8cff;--good:#22c55e;--bad:#ef4444;--warn:#f59e0b;--border:#232730}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text);line-height:1.5}
+a{color:var(--accent)}header{position:sticky;top:0;background:rgba(15,17,21,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:10}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 20px}
+h1{font-size:20px;margin:0;letter-spacing:-.02em}h2{font-size:16px;margin:0}h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.badge{font-size:12px;padding:4px 8px;border-radius:999px;background:#1e2330;border:1px solid #2a3347;color:var(--muted)}
+.badge strong{color:var(--text)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.progress{height:8px;background:#232730;border-radius:999px;overflow:hidden}
+.progress>div{height:100%;background:var(--accent);transition:width .3s}
+.progress.good>div{background:var(--good)}
+.subcard{cursor:pointer;transition:transform .06s,border-color .15s}
+.subcard:hover{transform:translateY(-1px);border-color:#2d3748}
+.subcard.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,140,255,.2)}
+.btn{appearance:none;border:1px solid var(--border);background:#1c212b;color:var(--text);padding:8px 14px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer}
+.btn:hover{border-color:#2d3748}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:white}
+.btn.ghost{background:transparent}
+.btn.small{padding:6px 10px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.kbd{font-family:ui-monospace,monospace;font-size:11px;padding:2px 6px;border:1px solid #2a3347;border-bottom-width:2px;border-radius:6px;background:#1a1f2b;color:var(--muted)}
+.q-card{max-width:760px;margin:0 auto}
+.opts{display:grid;gap:8px;margin:14px 0}
+.opt{padding:12px 14px;border-radius:10px;border:1px solid var(--border);background:#1a1f2b;color:var(--text);font-family:inherit;cursor:pointer;text-align:left;display:flex;gap:10px;align-items:flex-start;font-size:14px}
+.opt:hover{border-color:#2d3748}
+.opt.correct{border-color:var(--good);background:rgba(34,197,94,.12)}
+.opt.wrong{border-color:var(--bad);background:rgba(239,68,68,.12)}
+.opt .letter{width:26px;height:26px;border-radius:999px;background:#232730;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0}
+.qdots{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0 6px}
+.qdot{width:10px;height:10px;border-radius:999px;background:#2a3347;border:1px solid #2a3347;cursor:default}
+.qdot.seen{background:var(--warn);border-color:var(--warn)}
+.qdot.mastered{background:var(--good);border-color:var(--good)}
+.qdot.wrong{box-shadow:0 0 0 2px rgba(239,68,68,.55)}
+#resumeBar{display:none}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1c212b;border:1px solid #2d3748;color:var(--text);padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;display:none;z-index:50;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.small-muted{font-size:12px;color:var(--muted)}
+.pill{font-size:11px;padding:3px 7px;border-radius:999px;background:#1e2330;border:1px solid var(--border)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
+.tab.active{background:var(--accent);color:white;border-color:var(--accent)}
+.meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+hr{border:none;border-top:1px solid var(--border);margin:12px 0}
+details{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#141820}
+summary{cursor:pointer;font-weight:600;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap row" style="justify-content:space-between">
+    <div>
+      <h1>Ham Exam — SRS Trainer <span id="cls-sub" style="font-weight:400;color:var(--muted);font-size:13px"></span></h1>
+      <div class="tabs" id="clsTabs" style="margin-top:8px">
+        <button class="tab" data-c="technician">Technician</button>
+        <button class="tab" data-c="general">General</button>
+        <button class="tab" data-c="extra">Extra</button>
+      </div>
+      <div class="small-muted" id="countdown">Mock exam mirrors the real thing — <span id="cd"></span></div>
+    </div>
+    <div class="row">
+      <input id="username" placeholder="username" autocomplete="username" spellcheck="false"
+        style="background:#1c212b;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:10px;font-size:12px;width:130px" />
+      <input id="password" type="password" placeholder="password (min 4)" autocomplete="current-password" spellcheck="false"
+        style="background:#1c212b;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:10px;font-size:12px;width:130px" />
+      <button class="btn small" onclick="cloudLoad(true)">Load</button>
+      <span class="small-muted" id="cloud-status">☁ local</span>
+      <button class="btn small" id="mockBtn" onclick="startExam()">Mock Exam</button>
+      <button class="btn small ghost" onclick="resetProgress()">Reset</button>
+      <button class="btn small ghost" onclick="exportData()">Export</button>
+    </div>
+  </div>
+</header>
+<main class="wrap" style="padding-top:18px">
+  <!-- Stats -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:flex-start">
+      <div>
+        <h3>Overall</h3>
+        <div class="row" style="gap:10px;margin-top:4px">
+          <span class="badge"><strong id="s-seen">0</strong> seen</span>
+          <span class="badge"><strong id="s-mastered">0</strong> mastered</span>
+          <span class="badge"><strong id="s-weak">0</strong> weak</span>
+          <span class="badge"><strong id="s-due">0</strong> due</span>
+        </div>
+        <div class="progress" style="width:260px;margin-top:10px"><div id="p-overall" style="width:0%"></div></div>
+        <div class="small-muted" style="margin-top:6px"><span id="p-overall-label">0%</span> mastered • <span id="p-target"></span></div>
+      </div>
+      <div style="max-width:420px">
+        <h3 id="plan-head">Study plan</h3>
+        <div class="small-muted" style="font-size:13px;line-height:1.6" id="plan-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="row" style="margin:14px 0 8px">
+    <div class="tabs" id="filterTabs">
+      <button class="tab active" data-f="all">All</button>
+      <button class="tab" data-f="weak">Weak only</button>
+      <button class="tab" data-f="unseen">Unseen</button>
+      <button class="tab" data-f="due">Due</button>
+    </div>
+    <span class="small-muted">Tip: press <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span><span class="kbd">4</span> to answer • <span class="kbd">Space</span> next</span>
+  </div>
+
+  <!-- Subelement grid -->
+  <div class="grid" id="grid"></div>
+
+  <!-- Active study area -->
+  <div id="resumeBar" class="card" style="margin-top:14px;border-color:var(--accent)">
+    <div class="row" style="justify-content:space-between">
+      <div><strong id="resumeText">Paused session</strong><div class="small-muted" id="resumeSub"></div></div>
+      <div class="row">
+        <button class="btn small primary" onclick="resumeSession()">Resume</button>
+        <button class="btn small ghost" onclick="discardSession()">Discard</button>
+      </div>
+    </div>
+  </div>
+  <div id="studyWrap" style="display:none;margin-top:18px">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div class="small-muted" id="study-title">G0 • Electrical and RF Safety</div>
+          <h2 id="study-head" style="font-size:18px;margin-top:2px">Study</h2>
+          <div class="meta" id="study-meta"></div>
+        </div>
+        <div class="row">
+          <button class="btn small primary" onclick="pauseStudy()" title="Save position and close (Esc)">Pause</button>
+          <button class="btn small" onclick="closeStudy()">Close</button>
+          <button class="btn small" onclick="shuffleQueue()">Shuffle</button>
+        </div>
+      </div>
+      <hr>
+      <div id="studyArea"></div>
+    </div>
+  </div>
+
+  <!-- All questions list (for quick scan) -->
+  <details style="margin-top:14px">
+    <summary id="browse-summary">Browse all questions by group</summary>
+    <div id="browse" style="margin-top:10px" class="small-muted"></div>
+  </details>
+</main>
+<div id="toast"></div>
+<script>
+const CLASSES={
+  technician:{label:'Technician',file:'pool-technician.json',exp:'explanations-technician.json',examN:35,pass:26,ls:'ham-technician-srs-v1',range:'T0–T9',pool:'2022–2026 (hamexam.org/21)',plan:[['Day 1','T0 + T1 (104 Qs) — safety & rules'],['Day 2','T2 + T3 (72 Qs) — operating & propagation'],['Day 3','T4 + T5 (73 Qs) — practices & electrical'],['Day 4','T6 + T7 (90 Qs) — components & modes'],['Day 5','T8 + T9 (70 Qs) — regulations + review']]},
+  general:{label:'General',file:'pool-general.json',exp:'explanations.json',examN:35,pass:26,ls:'ham-general-srs-v1',range:'G0–G9',pool:'2019 pool (hamexam.org/19)',plan:[['Tue','G0 + G1 (77 Qs) — safety & rules'],['Wed','G2 + G3 (97 Qs) — procedures & propagation'],['Thu','G4 + G5 + G6 (123 Qs) — practices & electrical'],['Fri','G7 + G8 + G9 (126 Qs) + full review']]},
+  extra:{label:'Extra',file:'pool-extra.json',exp:'explanations-extra.json',examN:50,pass:37,ls:'ham-extra-srs-v1',range:'E0–E9',pool:'2024–2028 (hamexam.org/20)',plan:[['Week 1','E0 + E1 + E2 (140 Qs) — safety, rules, procedures'],['Week 2','E3 + E4 + E5 (151 Qs) — propagation & circuits'],['Week 3','E6 + E7 (167 Qs) — components & practices'],['Week 4','E8 + E9 (141 Qs) — signals + review']]},
+ };
+let CLASS=localStorage.getItem('ham-active-class')||'general';
+if(!CLASSES[CLASS]) CLASS='general';
+let POOL=[];
+let STATE={};
+let EXP={};
+let LS=CLASSES[CLASS].ls;
+const LS_USER='ham-username';
+const LS_PW='ham-password';
+const LS_TS_BASE='ham-updatedAt-';
+let LS_TS=LS_TS_BASE+CLASS;
+const LS_SES_BASE='ham-session-';
+let LS_SES=LS_SES_BASE+CLASS;
+
+function toast(msg, ms=2600){
+  const el=document.getElementById('toast');
+  if(!el) return;
+  el.textContent=msg; el.style.display='block';
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>{ el.style.display='none'; }, ms);
+}
+// Pause/continue: persist {sub, mode, queueIds, idx} on every step
+function saveSession(){
+  try{
+    if(!QUEUE.length || document.getElementById('studyWrap').style.display==='none'){ return; }
+    localStorage.setItem(LS_SES, JSON.stringify({sub:ACTIVE_SUB, mode:MODE, ids:QUEUE.map(q=>q.id), idx:QIDX, ts:Date.now()}));
+  }catch(e){}
+}
+function readSession(){
+  try{ return JSON.parse(localStorage.getItem(LS_SES)||'null'); }catch(e){ return null; }
+}
+function refreshResumeBar(){
+  const bar=document.getElementById('resumeBar');
+  if(!bar) return;
+  const s=readSession();
+  const studying=document.getElementById('studyWrap').style.display!=='none';
+  if(!s || !s.ids || !s.ids.length || studying){ bar.style.display='none'; return; }
+  bar.style.display='block';
+  const done=Math.min(s.idx||0, s.ids.length);
+  document.getElementById('resumeText').textContent=`Resume ${s.sub} • ${s.mode} — ${done}/${s.ids.length}`;
+  document.getElementById('resumeSub').textContent='Paused session restored from this browser.';
+}
+function resumeSession(){
+  const s=readSession();
+  if(!s) return;
+  const byId={}; POOL.forEach(q=>{ byId[q.id]=q; });
+  QUEUE=(s.ids||[]).map(id=>byId[id]).filter(Boolean);
+  if(!QUEUE.length){ discardSession(); return; }
+  ACTIVE_SUB=s.sub; MODE=s.mode||'learn'; EXAM_MODE=(MODE==='quiz');
+  QIDX=Math.min(s.idx||0, QUEUE.length-1);
+  document.getElementById('studyWrap').style.display='block';
+  document.getElementById('study-title').textContent=ACTIVE_SUB==='MIXED'?'Mock Exam':'Resume — '+ACTIVE_SUB;
+  document.getElementById('study-head').textContent='Paused session — pick up where you left off';
+  updateMeta(); renderQ();
+  refreshResumeBar();
+  document.getElementById('studyWrap').scrollIntoView({behavior:'smooth'});
+}
+function discardSession(){ localStorage.removeItem(LS_SES); refreshResumeBar(); }
+function pauseStudy(){ saveSession(); document.getElementById('studyWrap').style.display='none'; render(); refreshResumeBar(); toast('Paused — progress saved. Hit Resume to continue.'); }
+
+function cloudUser(){
+  const el=document.getElementById('username');
+  return (el?.value||'').trim().toLowerCase();
+}
+function cloudPass(){
+  const el=document.getElementById('password');
+  return (el?.value||'');
+}
+function validPass(p){ return typeof p==='string' && p.length>=4 && p.length<=128; }
+function setCloudStatus(t){ const el=document.getElementById('cloud-status'); if(el) el.textContent=t; }
+function validUser(u){ return /^[a-z0-9_-]{2,32}$/.test(u); }
+
+async function switchClass(c, push=true){
+  if(!CLASSES[c]) return;
+  CLASS=c; localStorage.setItem('ham-active-class', c);
+  LS=CLASSES[c].ls; LS_TS=LS_TS_BASE+c; LS_SES=LS_SES_BASE+c;
+  document.querySelectorAll('#clsTabs .tab').forEach(t=>t.classList.toggle('active', t.dataset.c===c));
+  try{ POOL=await (await fetch(CLASSES[c].file)).json(); }
+  catch(e){ POOL=await (await fetch('../'+CLASSES[c].file)).json(); }
+  EXP={};
+  for(const f of [CLASSES[c].exp, 'explanations.json', '../explanations.json']){
+    try{ EXP=await (await fetch(f)).json(); if(EXP && Object.keys(EXP).length) break; }catch(e){}
+  }
+  STATE=JSON.parse(localStorage.getItem(LS)||'{}');
+  QUEUE=[]; QIDX=0; ACTIVE_SUB=null;
+  document.getElementById('studyWrap').style.display='none';
+  render(); refreshResumeBar();
+  const savedUser=localStorage.getItem(LS_USER)||'';
+  if(savedUser && validUser(savedUser)) cloudLoad(false);
+  if(push){ try{ history.replaceState(null,'','#'+c); }catch(e){} }
+}
+async function load(){
+  const fromHash=(location.hash||'').replace('#','');
+  if(CLASSES[fromHash]) CLASS=fromHash;
+  document.querySelectorAll('#clsTabs .tab').forEach(t=>{
+    t.classList.toggle('active', t.dataset.c===CLASS);
+    t.onclick=()=>switchClass(t.dataset.c);
+  });
+  LS=CLASSES[CLASS].ls; LS_TS=LS_TS_BASE+CLASS; LS_SES=LS_SES_BASE+CLASS;
+  try{ POOL=await (await fetch(CLASSES[CLASS].file)).json(); }
+  catch(e){ POOL=await (await fetch('../'+CLASSES[CLASS].file)).json(); }
+  EXP={};
+  for(const f of [CLASSES[CLASS].exp, 'explanations.json', '../explanations.json']){
+    try{ EXP=await (await fetch(f)).json(); if(EXP && Object.keys(EXP).length) break; }catch(e){}
+  }
+  STATE=JSON.parse(localStorage.getItem(LS)||'{}');
+  const savedUser=localStorage.getItem(LS_USER)||'';
+  const uEl=document.getElementById('username');
+  if(uEl && savedUser) uEl.value=savedUser;
+  const savedPw=sessionStorage.getItem(LS_PW)||'';
+  const pEl=document.getElementById('password');
+  if(pEl && savedPw) pEl.value=savedPw;
+  render();
+  tickCountdown();
+  refreshResumeBar();
+  // auto-load cloud state if username + password are saved
+  if(savedUser && validUser(savedUser) && validPass(sessionStorage.getItem(LS_PW)||'')) cloudLoad(false);
+}
+let _saveTimer=null;
+function save(){
+  localStorage.setItem(LS, JSON.stringify(STATE));
+  localStorage.setItem(LS_TS, String(Date.now()));
+  const u=cloudUser();
+  const pw=cloudPass();
+  if(u && validUser(u)){
+    localStorage.setItem(LS_USER, u);
+    if(validPass(pw)) sessionStorage.setItem(LS_PW, pw);
+    setCloudStatus('☁ saving…');
+    clearTimeout(_saveTimer);
+    _saveTimer=setTimeout(cloudPush, 800);
+  }
+}
+async function cloudPush(){
+  const u=cloudUser();
+  const pw=cloudPass();
+  if(!u || !validUser(u)){ setCloudStatus('☁ local'); return; }
+  try{
+    const res=await fetch('/api/progress',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({username:u,class:CLASS,password:validPass(pw)?pw:undefined,state:STATE})});
+    if(res.status===401){ setCloudStatus('☁ password required'); return; }
+    if(res.status===403){ setCloudStatus('☁ wrong password'); return; }
+    if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.error||res.status); }
+    const j=await res.json();
+    localStorage.setItem(LS_TS, String(j.updatedAt||Date.now()));
+    setCloudStatus(j.locked?'☁ saved 🔒':'☁ saved');
+  }catch(e){ setCloudStatus('☁ error'); }
+}
+async function cloudLoad(manual){
+  const u=cloudUser();
+  const pw=cloudPass();
+  if(!u || !validUser(u)){
+    if(manual) alert('Enter a username first (2-32 chars: a-z 0-9 _ -).');
+    return;
+  }
+  localStorage.setItem(LS_USER, u);
+  if(validPass(pw)) sessionStorage.setItem(LS_PW, pw);
+  setCloudStatus('☁ loading…');
+  try{
+    let url='/api/progress?username='+encodeURIComponent(u)+'&class='+encodeURIComponent(CLASS);
+    if(validPass(pw)) url+='&pw='+encodeURIComponent(pw);
+    const res=await fetch(url);
+    if(res.status===401){ setCloudStatus('☁ password required'); if(manual) alert('This username is locked — enter the password.'); return; }
+    if(res.status===403){ setCloudStatus('☁ wrong password'); if(manual) alert('Wrong password for this username.'); return; }
+    if(!res.ok) throw new Error(await res.text());
+    const j=await res.json();
+    if(j.empty){ setCloudStatus('☁ new user'); await cloudPush(); render(); return; }
+    const localTs=parseInt(localStorage.getItem(LS_TS)||'0',10);
+    const localCount=Object.keys(STATE).length;
+    // Cloud wins if newer, or if local is empty. Otherwise push local up.
+    if(!localCount || (j.updatedAt||0) >= localTs){
+      STATE=j.state||{};
+      localStorage.setItem(LS, JSON.stringify(STATE));
+      localStorage.setItem(LS_TS, String(j.updatedAt||Date.now()));
+      setCloudStatus('☁ loaded');
+      render();
+    } else {
+      setCloudStatus('☁ local newer — pushed');
+      await cloudPush();
+    }
+  }catch(e){ setCloudStatus('☁ error'); }
+}
+function getS(id){ return STATE[id]||{seen:0,correct:0,wrong:0,box:0,dueAt:0}; }
+function isWeak(id){ const s=getS(id); return s.wrong>s.correct && s.seen>0; }
+
+function masteryOf(ids){
+  let mastered=ids.filter(id=>getS(id).box>=3).length;
+  return mastered;
+}
+function renderClassChrome(){
+  const cfg=CLASSES[CLASS];
+  document.title=`${cfg.label} Exam — SRS Trainer`;
+  const sub=document.getElementById('cls-sub');
+  if(sub) sub.textContent=`${cfg.label} • ${cfg.range} • ${POOL.length} Qs • ${cfg.pool}`;
+  const mock=document.getElementById('mockBtn');
+  if(mock) mock.textContent=`Mock Exam ${cfg.examN}Q`;
+  const tgt=document.getElementById('p-target');
+  if(tgt) tgt.textContent=`target: all ${POOL.length} (${cfg.examN}Q exam, ${cfg.pass} to pass)`;
+  const pb=document.getElementById('plan-body');
+  if(pb) pb.innerHTML=cfg.plan.map(([d,what])=>`<strong style="color:var(--text)">${d}:</strong> ${what}<br>`).join('')+`<span style="color:var(--warn)">Do 2 mock exams before test day.</span> Gaps auto-prioritized.`;
+  const bs=document.getElementById('browse-summary');
+  if(bs) bs.textContent=`Browse all ${POOL.length} questions by group`;
+  tickCountdown();
+}
+function render(){
+  renderClassChrome();
+  // overall stats
+  const allIds=POOL.map(p=>p.id);
+  const seen=allIds.filter(id=>getS(id).seen>0).length;
+  const mastered=allIds.filter(id=>getS(id).box>=3).length;
+  const weak=allIds.filter(id=>isWeak(id)).length;
+  const now=Date.now();
+  const due=allIds.filter(id=>{const s=getS(id); return s.seen>0 && s.dueAt<=now;}).length;
+  document.getElementById('s-seen').textContent=seen;
+  document.getElementById('s-mastered').textContent=mastered;
+  document.getElementById('s-weak').textContent=weak;
+  document.getElementById('s-due').textContent=due;
+  const pct=Math.round(mastered/allIds.length*100);
+  document.getElementById('p-overall').style.width=pct+'%';
+  document.getElementById('p-overall-label').textContent=pct+'%';
+
+  // grid by subelement
+  const subs=[...new Set(POOL.map(p=>p.subelement))].sort();
+  const filter=document.querySelector('.tab.active')?.dataset.f||'all';
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  for(const sub of subs){
+    const qs=POOL.filter(p=>p.subelement===sub);
+    const ids=qs.map(q=>q.id);
+    const title=qs[0].subelement_title||sub;
+    const m=masteryOf(ids);
+    const s=ids.filter(id=>getS(id).seen>0).length;
+    const w=ids.filter(id=>isWeak(id)).length;
+    const d=ids.filter(id=>getS(id).dueAt<=now && getS(id).seen>0).length;
+    const u=ids.filter(id=>!getS(id).seen).length;
+    // filter hiding
+    if(filter==='weak' && w===0) continue;
+    if(filter==='unseen' && u===0) continue;
+    if(filter==='due' && d===0) continue;
+    const groups=[...new Set(qs.map(q=>q.group))];
+    const div=document.createElement('div');
+    div.className='card subcard';
+    div.onclick=()=>openStudy(sub);
+    // Per-question dots: green=mastered(box>=3), yellow=seen, grey=unseen, red ring=missed
+    const dots=ids.map(id=>{
+      const st=getS(id);
+      const cls=st.box>=3?'qdot mastered':st.seen?'qdot seen':'qdot';
+      const ring=st.wrong>0?' wrong':'';
+      const label=`${id}: ${st.box>=3?'mastered':st.seen?('seen x'+st.seen+', box '+st.box):'unseen'}${st.wrong?(', wrong x'+st.wrong):''}`;
+      return `<span class="${cls}${ring}" title="${label}"></span>`;
+    }).join('');
+    div.innerHTML=`
+      <div class="row" style="justify-content:space-between"><span class="pill">${sub}</span><span class="small-muted" title="${ids.length} questions in ${sub}">${ids.length} Qs</span></div>
+      <div style="font-weight:700;margin:6px 0 2px;font-size:14px">${title}</div>
+      <div class="small-muted" style="font-size:12px">${groups.join(' • ')}</div>
+      <div class="qdots" title="${m}/${ids.length} mastered • ${s}/${ids.length} seen • ${u} unseen">${dots}</div>
+      <div class="small-muted" style="display:flex;justify-content:space-between"><span title="Mastered = box ≥ 3">${m}/${ids.length} mastered</span><span title="${s} of ${ids.length} seen">${s}/${ids.length} seen</span></div>
+      <div class="row" style="margin-top:8px;gap:6px">
+        <span class="badge" style="font-size:11px" title="${u} unseen in ${sub}">${u} unseen</span>
+        <span class="badge" style="font-size:11px" title="${w} with more wrong than right">${w} weak</span>
+        <span class="badge" style="font-size:11px" title="${d} due for review">${d} due</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn small primary" onclick="event.stopPropagation();openStudy('${sub}')">Study</button>
+        <button class="btn small" onclick="event.stopPropagation();openStudy('${sub}','weak')">Weak</button>
+        <button class="btn small" onclick="event.stopPropagation();startQuiz('${sub}')">Quiz</button>
+      </div>
+    `;
+    grid.appendChild(div);
+  }
+  // browse
+  const browse=document.getElementById('browse');
+  // build grouped list
+  let html='';
+  for(const sub of subs){
+    const qs=POOL.filter(p=>p.subelement===sub);
+    const byGroup={};
+    qs.forEach(q=>{ (byGroup[q.group]=byGroup[q.group]||[]).push(q); });
+    html+=`<div style="margin:10px 0 6px;font-weight:700;color:var(--text)">${sub} — ${qs[0].subelement_title} (${qs.length})</div>`;
+    for(const [g, arr] of Object.entries(byGroup)){
+      html+=`<div style="margin:6px 0 2px;color:var(--muted);font-weight:600">${g} — ${arr[0].group_title} (${arr.length})</div>`;
+      html+=`<div style="display:grid;gap:4px">`;
+      for(const q of arr){
+        const s=getS(q.id);
+        const dot=s.box>=3?'🟢':s.seen?'🟡':'⚪';
+        const wr=s.wrong?` <span style="color:var(--bad)">×${s.wrong}</span>`:'';
+        html+=`<div style="font-size:12px">${dot} <strong>${q.id}</strong> ${q.question.slice(0,90)}… <span style="opacity:.6">[${q.answer}]</span>${wr}</div>`;
+      }
+      html+=`</div>`;
+    }
+  }
+  browse.innerHTML=html;
+}
+
+// Study engine
+let QUEUE=[], QIDX=0, MODE='learn', ACTIVE_SUB=null, EXAM_MODE=false;
+
+function buildQueue(sub, mode){
+  let pool=POOL.filter(p=> p.subelement===sub);
+  if(mode==='weak') pool=pool.filter(p=> isWeak(p.id));
+  if(mode==='unseen') pool=pool.filter(p=> !getS(p.id).seen);
+  // Study/learn prioritizes unseen first: unseen (shuffled) then SRS order for the rest.
+  // SRS ordering for seen: wrong first, then due, then box asc, then random
+  const now=Date.now();
+  const unseen=pool.filter(p=>!getS(p.id).seen);
+  const seen=pool.filter(p=>getS(p.id).seen);
+  const srsSort=(a,b)=>{
+    const sa=getS(a.id), sb=getS(b.id);
+    const score = (s)=> {
+      if(s.wrong> s.correct) return -100 - s.wrong;
+      if(s.dueAt<=now) return -20;
+      return s.box;
+    };
+    return score(sa)-score(sb) || Math.random()-0.5;
+  };
+  seen.sort(srsSort);
+  if(mode==='learn') return [...shuffle(unseen), ...seen];
+  pool.sort((a,b)=>{
+    const sa=getS(a.id), sb=getS(b.id);
+    const score = (s)=> {
+      if(s.wrong> s.correct) return -100 - s.wrong;
+      if(!s.seen) return -50;
+      if(s.dueAt<=now) return -20;
+      return s.box;
+    };
+    return score(sa)-score(sb) || Math.random()-0.5;
+  });
+  return pool;
+}
+function unseenCount(sub){
+  if(sub==='MIXED') return POOL.filter(p=>!getS(p.id).seen).length;
+  return POOL.filter(p=> p.subelement===sub && !getS(p.id).seen).length;
+}
+
+function openStudy(sub, mode='learn'){
+  ACTIVE_SUB=sub; MODE=mode; EXAM_MODE=false;
+  QUEUE=buildQueue(sub, mode);
+  if(!QUEUE.length){ alert('No questions for this filter.'); return; }
+  QIDX=0;
+  localStorage.removeItem(LS_SES);
+  document.getElementById('studyWrap').style.display='block';
+  const qs=POOL.filter(p=>p.subelement===sub);
+  document.getElementById('study-title').textContent=sub+' • '+qs[0].subelement_title;
+  const u=unseenCount(sub);
+  document.getElementById('study-head').textContent= mode==='weak'?'Target weak gaps':mode==='unseen'?'Unseen first':(u>0?`Unseen first — ${u} unseen in ${sub}`:`Review — all ${qs.length} seen in ${sub}`);
+  updateMeta();
+  renderQ();
+  refreshResumeBar();
+  document.getElementById('studyWrap').scrollIntoView({behavior:'smooth'});
+}
+function startQuiz(sub){
+  if(sub) { ACTIVE_SUB=sub; QUEUE=shuffle(POOL.filter(p=>p.subelement===sub)).slice(0, Math.min(15, POOL.filter(p=>p.subelement===sub).length)); }
+  else { QUEUE=shuffle([...POOL]).slice(0,35); ACTIVE_SUB='MIXED'; }
+  MODE='quiz'; EXAM_MODE=true; QIDX=0;
+  document.getElementById('studyWrap').style.display='block';
+  document.getElementById('study-title').textContent=ACTIVE_SUB==='MIXED'?'Mock Exam':'Quiz — '+ACTIVE_SUB;
+  document.getElementById('study-head').textContent='Exam simulation (no hints until end)';
+  updateMeta();
+  renderQ();
+  document.getElementById('studyWrap').scrollIntoView({behavior:'smooth'});
+}
+function startExam(n){
+  n=n||CLASSES[CLASS].examN;
+  QUEUE=shuffle([...POOL]).slice(0,n);
+  ACTIVE_SUB='MIXED'; MODE='quiz'; EXAM_MODE=true; QIDX=0;
+  document.getElementById('studyWrap').style.display='block';
+  document.getElementById('study-title').textContent='Mock Exam';
+  document.getElementById('study-head').textContent=`${n} random questions — real exam is ${CLASSES[CLASS].examN}Q, ${CLASSES[CLASS].pass} to pass`;
+  updateMeta();
+  renderQ();
+  document.getElementById('studyWrap').scrollIntoView({behavior:'smooth'});
+}
+function updateMeta(){
+  const at=Math.min(QIDX+1, QUEUE.length), tot=QUEUE.length;
+  const u=ACTIVE_SUB?unseenCount(ACTIVE_SUB):0;
+  const unseenBit=(MODE==='learn' && ACTIVE_SUB && ACTIVE_SUB!=='MIXED')?` • <span title="Unseen remaining in ${ACTIVE_SUB}">${u} unseen left</span>`:'';
+  document.getElementById('study-meta').innerHTML=`<span title="Question ${at} of ${tot}">${at}/${tot}</span> • <span>${MODE}</span>${unseenBit} • <span>press 1-4 / Space</span>`;
+}
+function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]];} return b;}
+function shuffleQueue(){ QUEUE=shuffle(QUEUE); QIDX=0; renderQ(); updateMeta(); saveSession(); }
+function closeStudy(){ saveSession(); document.getElementById('studyWrap').style.display='none'; render(); refreshResumeBar(); }
+
+let revealed=false, choice=null;
+function renderQ(){
+  const q=QUEUE[QIDX];
+  if(!q){ // done
+    // compute session score: count where last answer was correct -> we track via box? simpler: compute from recent
+    const wrap=document.getElementById('studyArea');
+    const weakLeft=ACTIVE_SUB==='MIXED'?POOL.filter(p=>isWeak(p.id)).length:POOL.filter(p=> p.subelement===ACTIVE_SUB && isWeak(p.id)).length;
+    const u=ACTIVE_SUB?unseenCount(ACTIVE_SUB):0;
+    const allSeenMsg=u===0?`<div style="color:var(--good);font-weight:700;margin-top:8px">All questions seen in ${ACTIVE_SUB||'pool'} ✓ — now Weak + Due + Quiz to lock it.</div>`:`<div class="small-muted" style="margin-top:8px">${u} unseen left in ${ACTIVE_SUB||'pool'} — Study again to finish them.</div>`;
+    wrap.innerHTML=`<div style="text-align:center;padding:18px">
+      <div style="font-size:42px">✓</div>
+      <div style="font-weight:800;font-size:18px;margin-top:6px">Set complete</div>
+      <div class="small-muted" style="margin-top:6px">${QUEUE.length} questions • ${weakLeft} still weak in ${ACTIVE_SUB||'pool'}</div>
+      ${allSeenMsg}
+      <div class="row" style="justify-content:center;margin-top:14px">
+        ${ACTIVE_SUB==='MIXED'
+          ? `<button class="btn primary" onclick="startExam()">New mock</button>`
+          : `<button class="btn primary" onclick="openStudy(ACTIVE_SUB,'weak')">Drill weak</button>
+             <button class="btn" onclick="openStudy(ACTIVE_SUB,'learn')">Again</button>`}
+        <button class="btn" onclick="closeStudy()">Back to overview</button>
+      </div>
+    </div>`;
+    save(); render(); discardSession();
+    if(u===0) toast(`All questions seen in ${ACTIVE_SUB||'pool'} ✓`);
+    return;
+  }
+  revealed=false; choice=null;
+  const wrap=document.getElementById('studyArea');
+  const letters=['A','B','C','D'];
+  const figMatch=q.question.match(/figure\s+([A-Z]?\d+-\d+)/i);
+  const figName=figMatch?figMatch[1].toUpperCase():null;
+  const figHtml=figName?`<details open style="margin:8px 0 6px;background:#f4f6f8;border-radius:10px;padding:8px"><summary style="cursor:pointer;font-size:12px;color:#333">Figure ${figName} (tap to hide)</summary><img src="figures/${figName}.png" alt="Figure ${figName}" style="width:100%;height:auto;display:block;border-radius:6px" onerror="this.parentElement.innerHTML='Figure ${figName} image missing — see HamStudy.org for the diagram.'"></details>`:'';
+  const opts=letters.map(L=>`<button class="opt" data-l="${L}" onclick="answer('${L}')"><span class="letter">${L}</span><span>${q.options[L]}</span></button>`).join('');
+  wrap.innerHTML=`
+    <div class="qdots" style="margin:0 0 12px" title="Position ${QIDX+1} of ${QUEUE.length}">${QUEUE.map((qq,i)=>{
+      const st=getS(qq.id);
+      const cls=i<QIDX?'qdot mastered':i===QIDX?'qdot seen':'qdot';
+      return `<span class="${cls}" title="${i+1}. ${qq.id}${st.seen?' (seen x'+st.seen+')':' (unseen)'}"></span>`;
+    }).join('')}</div>
+    <div class="q-card">
+      <div class="small-muted">${q.group} • ${q.id} • ${q.group_title}</div>
+      <div style="font-size:18px;font-weight:700;margin:8px 0 6px">${q.question}</div>
+      ${figHtml}
+      <div class="opts">${opts}</div>
+      <div id="fb" style="display:none" class="card" style="background:#141820"></div>
+      <div class="row" style="justify-content:space-between;margin-top:12px">
+        <span class="small-muted" id="prog-label">${QIDX+1} / ${QUEUE.length} • Box ${getS(q.id).box||0} • seen ${getS(q.id).seen||0}</span>
+        <button class="btn small" id="nextBtn" onclick="nextQ()" style="display:none">Next →</button>
+      </div>
+    </div>
+  `;
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function expHtml(id){
+  const e=EXP[id];
+  if(!e || !e.text) return '';
+  const body=esc(e.text).replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
+  return `<div style="margin-top:8px;padding:8px 10px;background:#1a1f2b;border-radius:8px;font-size:13px"><strong>Why:</strong> ${body}<div class="small-muted" style="margin-top:6px">Explanation via <a href="${esc(e.url)}" target="_blank" rel="noopener">HamStudy.org</a></div></div>`;
+}
+function answer(letter){
+  if(revealed) return;
+  revealed=true; choice=letter;
+  const q=QUEUE[QIDX];
+  const correct=q.answer;
+  const isCorrect=letter===correct;
+  // update SRS
+  const s=getS(q.id);
+  s.seen=(s.seen||0)+1;
+  if(isCorrect){ s.correct=(s.correct||0)+1; s.box=Math.min(5,(s.box||0)+1); }
+  else { s.wrong=(s.wrong||0)+1; s.box=Math.max(0,(s.box||0)-1); if(s.wrong>=2) s.box=0; }
+  // due scheduling: 0-> 0h, 1->4h, 2->12h, 3->24h, 4->72h, 5-> 7d
+  const hours=[0,4,12,24,72,168][s.box]||0;
+  s.dueAt=Date.now()+ hours*3600*1000;
+  STATE[q.id]=s; save(); render();
+  // all-seen notification for this subelement
+  if(ACTIVE_SUB && ACTIVE_SUB!=='MIXED'){
+    const u=unseenCount(ACTIVE_SUB);
+    if(u===0 && !answer._allSeenToast){
+      answer._allSeenToast=ACTIVE_SUB;
+      toast(`All questions seen in ${ACTIVE_SUB} ✓ — finishing this set locks it.`);
+    }
+    if(u>0) answer._allSeenToast=null;
+  }
+  // reveal UI
+  document.querySelectorAll('.opt').forEach(el=>{
+    const L=el.dataset.l;
+    if(L===correct) el.classList.add('correct');
+    else if(L===letter && L!==correct) el.classList.add('wrong');
+    el.style.pointerEvents='none';
+  });
+  const fb=document.getElementById('fb');
+  fb.style.display='block';
+  fb.innerHTML= isCorrect
+    ? `<div style="color:var(--good);font-weight:700">Correct ✓ — ${correct}. ${q.options[correct]}</div><div class="small-muted">Box → ${s.box} • next due in ${hours}h • Keep going.</div>${expHtml(q.id)}`
+    : `<div style="color:var(--bad);font-weight:700">Wrong — you chose ${letter}, correct is ${correct}. ${q.options[correct]}</div>
+       <div class="small-muted" style="margin-top:6px">This goes back to review sooner. Box → ${s.box}</div>
+       <div style="margin-top:8px;padding:8px 10px;background:#1a1f2b;border-radius:8px;font-size:13px"><strong>Q:</strong> ${q.question}<br><strong>A:</strong> ${correct}. ${q.options[correct]}</div>${expHtml(q.id)}`;
+  document.getElementById('nextBtn').style.display='inline-block';
+  updateMeta();
+  if(isCorrect && !(EXP[q.id] && EXP[q.id].text)) setTimeout(()=>{ if(revealed) nextQ(); }, 700);
+}
+function nextQ(){ QIDX++; updateMeta(); renderQ(); saveSession(); }
+
+document.addEventListener('keydown', e=>{
+  if(document.getElementById('studyWrap').style.display==='none') return;
+  if(['1','2','3','4'].includes(e.key) && !revealed){ answer(['A','B','C','D'][parseInt(e.key)-1]); }
+  if(e.code==='Space' && revealed){ e.preventDefault(); nextQ(); }
+  if(e.key==='Enter' && revealed) nextQ();
+  if(e.key==='Escape'){ e.preventDefault(); pauseStudy(); }
+});
+window.addEventListener('beforeunload', ()=>{ saveSession(); });
+
+function resetProgress(){ if(confirm('Reset all progress?')){ localStorage.removeItem(LS); localStorage.setItem(LS_TS, String(Date.now())); STATE={}; save(); render(); closeStudy(); } }
+function exportData(){
+  const blob=new Blob([JSON.stringify(STATE,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`ham-${CLASS}-progress.json`; a.click(); URL.revokeObjectURL(url);
+}
+document.querySelectorAll('.tab').forEach(t=> t.addEventListener('click', ()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); render(); }));
+function tickCountdown(){
+  const cfg=CLASSES[CLASS];
+  const el=document.getElementById('cd');
+  if(el) el.textContent=`real exam: ${cfg.examN}Q, ${cfg.pass} to pass`;
+}
+load();
+</script>
+</body>
+</html>

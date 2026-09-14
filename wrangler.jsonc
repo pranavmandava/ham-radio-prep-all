@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ham-radio-prep-all",
+  "compatibility_date": "2026-09-03",
+  "main": "src/index.ts",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "PROGRESS_KV",
+      "id": "8f907406cb2f4dc698919db30bc98505"
+    }
+  ]
+}
