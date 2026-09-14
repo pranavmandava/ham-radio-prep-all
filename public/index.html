@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Ham Exam — SRS Trainer (Technician / General / Extra)</title>
 <style>
-:root{--bg:#0f1115;--card:#171a20;--muted:#9aa0aa;--text:#e8e9eb;--accent:#4f8cff;--good:#22c55e;--bad:#ef4444;--warn:#f59e0b;--border:#232730}
+:root{--bg:#0f1115;--card:#171a20;--muted:#9aa0aa;--text:#e8e9eb;--accent:#4f8cff;--on-accent:#fff;--good:#22c55e;--bad:#ef4444;--warn:#f59e0b;--border:#232730}
+body[data-class="general"]{--accent:#4f8cff;--on-accent:#fff}
+body[data-class="technician"]{--accent:#22c55e;--on-accent:#052e16}
+body[data-class="extra"]{--accent:#eab308;--on-accent:#422006}
 *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text);line-height:1.5}
 a{color:var(--accent)}header{position:sticky;top:0;background:rgba(15,17,21,.85);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:10}
 .wrap{max-width:1100px;margin:0 auto;padding:16px 20px}
@@ -23,7 +26,7 @@ h1{font-size:20px;margin:0;letter-spacing:-.02em}h2{font-size:16px;margin:0}h3{f
 .subcard.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(79,140,255,.2)}
 .btn{appearance:none;border:1px solid var(--border);background:#1c212b;color:var(--text);padding:8px 14px;border-radius:10px;font-weight:600;font-size:13px;cursor:pointer}
 .btn:hover{border-color:#2d3748}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:white}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .btn.ghost{background:transparent}
 .btn.small{padding:6px 10px;font-size:12px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
@@ -46,7 +49,7 @@ h1{font-size:20px;margin:0;letter-spacing:-.02em}h2{font-size:16px;margin:0}h3{f
 .pill{font-size:11px;padding:3px 7px;border-radius:999px;background:#1e2330;border:1px solid var(--border)}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tab{padding:6px 10px;border-radius:999px;font-size:12px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer}
-.tab.active{background:var(--accent);color:white;border-color:var(--accent)}
+.tab.active{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 hr{border:none;border-top:1px solid var(--border);margin:12px 0}
 details{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:#141820}
@@ -57,13 +60,13 @@ summary{cursor:pointer;font-weight:600;font-size:13px}
 <header>
   <div class="wrap row" style="justify-content:space-between">
     <div>
-      <h1>Ham Exam — SRS Trainer <span id="cls-sub" style="font-weight:400;color:var(--muted);font-size:13px"></span></h1>
+      <h1>Ham Exam — SRS Trainer</h1>
       <div class="tabs" id="clsTabs" style="margin-top:8px">
         <button class="tab" data-c="technician">Technician</button>
         <button class="tab" data-c="general">General</button>
         <button class="tab" data-c="extra">Extra</button>
       </div>
-      <div class="small-muted" id="countdown">Mock exam mirrors the real thing — <span id="cd"></span></div>
+      <div class="small-muted" id="cls-sub" style="margin-top:6px"></div>
     </div>
     <div class="row">
       <input id="username" placeholder="username" autocomplete="username" spellcheck="false"
@@ -92,10 +95,6 @@ summary{cursor:pointer;font-weight:600;font-size:13px}
         </div>
         <div class="progress" style="width:260px;margin-top:10px"><div id="p-overall" style="width:0%"></div></div>
         <div class="small-muted" style="margin-top:6px"><span id="p-overall-label">0%</span> mastered • <span id="p-target"></span></div>
-      </div>
-      <div style="max-width:420px">
-        <h3 id="plan-head">Study plan</h3>
-        <div class="small-muted" style="font-size:13px;line-height:1.6" id="plan-body"></div>
       </div>
     </div>
   </div>
@@ -142,12 +141,25 @@ summary{cursor:pointer;font-weight:600;font-size:13px}
       <div id="studyArea"></div>
     </div>
   </div>
+  <div id="viewWrap" style="display:none;margin-top:18px">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div class="small-muted" id="view-title"></div>
+          <h2 id="view-head" style="font-size:18px;margin-top:2px">Questions & Answers</h2>
+          <div class="meta" id="view-meta"></div>
+        </div>
+        <div class="row">
+          <label class="small-muted" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="view-hide-wrong" onchange="renderViewOpts()"> hide incorrect</label>
+          <label class="small-muted" style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="checkbox" id="view-hide-exp" onchange="renderViewOpts()"> hide explanations</label>
+          <button class="btn small" onclick="closeView()">Close</button>
+        </div>
+      </div>
+      <hr>
+      <div id="viewArea" style="display:grid;gap:12px"></div>
+    </div>
+  </div>
 
-  <!-- All questions list (for quick scan) -->
-  <details style="margin-top:14px">
-    <summary id="browse-summary">Browse all questions by group</summary>
-    <div id="browse" style="margin-top:10px" class="small-muted"></div>
-  </details>
 </main>
 <div id="toast"></div>
 <script>
@@ -344,6 +356,7 @@ function masteryOf(ids){
 }
 function renderClassChrome(){
   const cfg=CLASSES[CLASS];
+  document.body.dataset.class=CLASS;
   document.title=`${cfg.label} Exam — SRS Trainer`;
   const sub=document.getElementById('cls-sub');
   if(sub) sub.textContent=`${cfg.label} • ${cfg.range} • ${POOL.length} Qs • ${cfg.pool}`;
@@ -351,10 +364,6 @@ function renderClassChrome(){
   if(mock) mock.textContent=`Mock Exam ${cfg.examN}Q`;
   const tgt=document.getElementById('p-target');
   if(tgt) tgt.textContent=`target: all ${POOL.length} (${cfg.examN}Q exam, ${cfg.pass} to pass)`;
-  const pb=document.getElementById('plan-body');
-  if(pb) pb.innerHTML=cfg.plan.map(([d,what])=>`<strong style="color:var(--text)">${d}:</strong> ${what}<br>`).join('')+`<span style="color:var(--warn)">Do 2 mock exams before test day.</span> Gaps auto-prioritized.`;
-  const bs=document.getElementById('browse-summary');
-  if(bs) bs.textContent=`Browse all ${POOL.length} questions by group`;
   tickCountdown();
 }
 function render(){
@@ -419,32 +428,11 @@ function render(){
         <button class="btn small primary" onclick="event.stopPropagation();openStudy('${sub}')">Study</button>
         <button class="btn small" onclick="event.stopPropagation();openStudy('${sub}','weak')">Weak</button>
         <button class="btn small" onclick="event.stopPropagation();startQuiz('${sub}')">Quiz</button>
+        <button class="btn small" onclick="event.stopPropagation();openView('${sub}')">View Q&A</button>
       </div>
     `;
     grid.appendChild(div);
   }
-  // browse
-  const browse=document.getElementById('browse');
-  // build grouped list
-  let html='';
-  for(const sub of subs){
-    const qs=POOL.filter(p=>p.subelement===sub);
-    const byGroup={};
-    qs.forEach(q=>{ (byGroup[q.group]=byGroup[q.group]||[]).push(q); });
-    html+=`<div style="margin:10px 0 6px;font-weight:700;color:var(--text)">${sub} — ${qs[0].subelement_title} (${qs.length})</div>`;
-    for(const [g, arr] of Object.entries(byGroup)){
-      html+=`<div style="margin:6px 0 2px;color:var(--muted);font-weight:600">${g} — ${arr[0].group_title} (${arr.length})</div>`;
-      html+=`<div style="display:grid;gap:4px">`;
-      for(const q of arr){
-        const s=getS(q.id);
-        const dot=s.box>=3?'🟢':s.seen?'🟡':'⚪';
-        const wr=s.wrong?` <span style="color:var(--bad)">×${s.wrong}</span>`:'';
-        html+=`<div style="font-size:12px">${dot} <strong>${q.id}</strong> ${q.question.slice(0,90)}… <span style="opacity:.6">[${q.answer}]</span>${wr}</div>`;
-      }
-      html+=`</div>`;
-    }
-  }
-  browse.innerHTML=html;
 }
 
 // Study engine
@@ -493,6 +481,7 @@ function openStudy(sub, mode='learn'){
   if(!QUEUE.length){ alert('No questions for this filter.'); return; }
   QIDX=0;
   localStorage.removeItem(LS_SES);
+  document.getElementById('viewWrap').style.display='none';
   document.getElementById('studyWrap').style.display='block';
   const qs=POOL.filter(p=>p.subelement===sub);
   document.getElementById('study-title').textContent=sub+' • '+qs[0].subelement_title;
@@ -534,6 +523,38 @@ function updateMeta(){
 function shuffle(a){ const b=[...a]; for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]];} return b;}
 function shuffleQueue(){ QUEUE=shuffle(QUEUE); QIDX=0; renderQ(); updateMeta(); saveSession(); }
 function closeStudy(){ saveSession(); document.getElementById('studyWrap').style.display='none'; render(); refreshResumeBar(); }
+function figFor(q){
+  const m=q.question.match(/figure\s+([A-Z]?\d+-\d+)/i);
+  const n=m?m[1].toUpperCase():null;
+  return n?`<details open style="margin:8px 0 6px;background:#f4f6f8;border-radius:10px;padding:8px"><summary style="cursor:pointer;font-size:12px;color:#333">Figure ${n} (tap to hide)</summary><img src="figures/${n}.png" alt="Figure ${n}" loading="lazy" style="width:100%;height:auto;display:block;border-radius:6px" onerror="this.parentElement.innerHTML='Figure ${n} image missing — see HamStudy.org for the diagram.'"></details>`:'';
+}
+function openView(sub){
+  const qs=POOL.filter(p=>p.subelement===sub);
+  if(!qs.length) return;
+  document.getElementById('studyWrap').style.display='none';
+  document.getElementById('viewWrap').style.display='block';
+  document.getElementById('view-title').textContent=sub+' • '+qs[0].subelement_title;
+  document.getElementById('view-meta').textContent=`${qs.length} questions • scroll to review • correct answer highlighted`;
+  const letters=['A','B','C','D'];
+  document.getElementById('viewArea').innerHTML=qs.map(q=>`
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:#141820">
+      <div class="small-muted">${q.group} • ${q.id} • ${q.group_title}</div>
+      <div style="font-weight:700;margin:6px 0">${q.question}</div>
+      ${figFor(q)}
+      <div style="display:grid;gap:6px;margin-top:8px">`+
+        letters.map(L=>`<div class="view-opt ${L===q.answer?'view-correct':'view-wrong'}" style="padding:8px 10px;border-radius:8px;font-size:13px;${L===q.answer?'border:1px solid var(--good);background:rgba(34,197,94,.12);font-weight:700':'border:1px solid var(--border);opacity:.75'}"><strong>${L}.</strong> ${q.options[L]}${L===q.answer?' ✓':''}</div>`).join('')+
+      `</div><div class="view-exp">${expHtml(q.id)}</div>
+    </div>`).join('');
+  renderViewOpts();
+  document.getElementById('viewWrap').scrollIntoView({behavior:'smooth'});
+}
+function closeView(){ document.getElementById('viewWrap').style.display='none'; }
+function renderViewOpts(){
+  const hw=document.getElementById('view-hide-wrong')?.checked;
+  const he=document.getElementById('view-hide-exp')?.checked;
+  document.querySelectorAll('#viewArea .view-wrong').forEach(el=>{ el.style.display=hw?'none':''; });
+  document.querySelectorAll('#viewArea .view-exp').forEach(el=>{ el.style.display=he?'none':''; });
+}
 
 let revealed=false, choice=null;
 function renderQ(){
